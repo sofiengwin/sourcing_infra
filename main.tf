@@ -9,14 +9,15 @@ terraform {
 
 provider "aws" {
   profile = "terraform"
+  region = "us-east-1"
 }
 
 resource "aws_lambda_function" "test_lambda" {
-  s3_bucket = "sourcers"
-  s3_key = "api_sourcer"
+  s3_bucket = var.bucket_name
+  s3_key = var.s3_key
   function_name = "api_sourcer"
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "api_sourcer"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "bootstrap"
 
   runtime = "go1.x"
 
@@ -27,29 +28,56 @@ resource "aws_lambda_function" "test_lambda" {
   }
 }
 
+resource "aws_lambda_function_url" "test_latest" {
+  function_name      = aws_lambda_function.test_lambda.function_name
+  authorization_type = "NONE"
+}
+
 # See also the following AWS managed policy: AWSLambdaBasicExecutionRole
 data "aws_iam_policy_document" "lambda_logging" {
-  statement {
-    effect = "Allow"
+   statement {
+    sid = "1"
 
     actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation",
     ]
 
-    resources = ["arn:aws:logs:*:*:*"]
+    resources = [
+      "arn:aws:s3:::*",
+    ]
   }
 }
 
-resource "aws_iam_policy" "lambda_logging" {
-  name        = "lambda_logging"
-  path        = "/"
-  description = "IAM policy for logging from a lambda"
-  policy      = data.aws_iam_policy_document.lambda_logging.json
-}
+# resource "aws_iam_policy" "lambda_logging" {
+#   name        = "lambda_logging"
+#   description = "IAM policy for logging from a lambda"
+#   policy      = data.aws_iam_policy_document.lambda_logging.json
+# }
 
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
-  role       = aws_iam_role.iam_for_lambda.name
-  policy_arn = aws_iam_policy.lambda_logging.arn
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name = "lambda_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Sid    = ""
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket" "exam_bot_bucket" {
+  bucket = var.bucket_name
+  force_destroy = true
 }
