@@ -18,3 +18,9 @@ variable "SUPABASE_KEY" {
   sensitive = true
   nullable = false
 }
+
+variable "X_RapidAPI_KEY" {
+  type = string
+  sensitive = true
+  nullable = false
+}

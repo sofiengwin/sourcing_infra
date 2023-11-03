@@ -27,6 +27,7 @@ resource "aws_lambda_function" "test_lambda" {
       FOO = "FOO"
       SUPABASE_KEY = var.SUPABASE_KEY
       SUPABASE_URL = var.SUPABASE_URL
+      X_RapidAPI_KEY = var.X_RapidAPI_KEY
     }
   }
 }
