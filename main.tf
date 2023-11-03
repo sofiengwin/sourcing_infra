@@ -23,7 +23,10 @@ resource "aws_lambda_function" "test_lambda" {
 
   environment {
     variables = {
-      foo = "bar"
+      BAR = "BAR"
+      FOO = "FOO"
+      SUPABASE_KEY = var.SUPABASE_KEY
+      SUPABASE_URL = var.SUPABASE_URL
     }
   }
 }
